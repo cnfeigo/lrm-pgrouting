@@ -6,10 +6,12 @@ L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
 
 L.Routing.control({
 	waypoints: [
-		L.latLng(57.74, 11.94),
-		L.latLng(57.6792, 11.949)
+		L.latLng(34.944479, 135.702857),
+		L.latLng(34.944916, 135.702972),
+		L.latLng(34.944530, 135.703476)
 	],
 	geocoder: L.Control.Geocoder.nominatim(),
-	router: L.Routing.graphHopper('your-api-key'),
-	routeWhileDragging: false
+	router: L.Routing.pgRouting('muko'),
+	routeWhileDragging: false,
+	reverseWaypoints: true
 }).addTo(map);
