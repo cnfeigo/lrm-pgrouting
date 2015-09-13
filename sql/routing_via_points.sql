@@ -226,7 +226,7 @@ BEGIN
             IF edgeRecords[i].pos < edgeRecords[i+1].pos THEN
                 geom := ST_Line_Substring(routeRecords[1].geom, edgeRecords[i].pos, edgeRecords[i+1].pos);
             ELSE
-                geom := ST_Line_Substring(ST_Reverse(routeRecords[1].geom), 1.0 - edgeRecords[i+1].pos, 1.0 - edgeRecords[i].pos);
+                geom := ST_Line_Substring(ST_Reverse(routeRecords[1].geom), 1.0 - edgeRecords[i].pos, 1.0 - edgeRecords[i+1].pos);
             END IF;
             -- Calculate heading (simplified)
             EXECUTE 'SELECT degrees( ST_Azimuth( 
