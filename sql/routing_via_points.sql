@@ -216,12 +216,13 @@ BEGIN
             point_type := 0;
             IF i = 1 THEN
                 point_type := point_type + 1;
+            ELSE
+                point_type := point_type + 4;
             END IF;
             IF i = pointCount - 1 THEN
                 point_type := point_type + 2;
-            END IF;
-            IF i > 1 AND i < pointCount - 1 THEN
-                point_type := point_type + 4 + 8;
+            ELSE
+                point_type := point_type + 8;
             END IF;
             IF edgeRecords[i].pos < edgeRecords[i+1].pos THEN
                 geom := ST_Line_Substring(routeRecords[1].geom, edgeRecords[i].pos, edgeRecords[i+1].pos);
