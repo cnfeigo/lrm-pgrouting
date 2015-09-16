@@ -80,6 +80,7 @@
 				routeCoords = [],
 				viaCoords = [],
 				viaIndices = [],
+				instructions = [],
 				edgeCoords,
 				i,
 				feature,
@@ -108,6 +109,7 @@
 					viaCoords.push(edgeCoords[edgeCoords.length - 1]);
 					viaIndices.push(routeCoords.length + edgeCoords.length - 1);
 				}
+				instructions = instructions.concat(this._convertInstructions(feature.properties, routeCoords, edgeCoords));
 				routeCoords = routeCoords.concat(edgeCoords);
 				totalDistance += feature.properties.distance;
 				totalTime += feature.properties.cost * 3600;
@@ -118,10 +120,10 @@
 			alts.push({
 				name: '',
 				coordinates: routeCoords,
-				instructions: this._convertInstructions(response.features),
+				instructions: instructions,
 				summary: {
 					totalDistance: totalDistance,
-					totalTime: totalTime
+					totalTime: Math.round(totalTime)
 				},
 				inputWaypoints: inputWaypoints,
 				waypoints: actualWaypoints,
@@ -173,24 +175,87 @@
 			return baseUrl;
 		},
 
-		_convertInstructions: function(features) {
+		_convertInstructions: function(props, routeCoords, edgeCoords) {
 			var result = [],
-				i,
-				props;
+				type,
+				text,
+				distance,
+				time;
 
-			for (i = 0; i < features.length; i++) {
-				props = features[i].properties;
+			text = (props.name) ? props.name : '';
+			distance = props.distance;
+			time = Math.round(props.cost * 3600);
+			if (props.pointType & 1) {
 				result.push({
-					type: '', // TODO:
-					text: props.name,
-					distance: props.distance,
-					time: props.cost * 3600,
-					index: 0, // TODO:
-					exit: 0 // TODO:
+					type: 'Straight',
+					text: text,
+					distance: distance,
+					time: time,
+					index: 0
+				});
+				return result;
+			}
+
+			type = this._getInstructionType(routeCoords[routeCoords.length - 2], routeCoords[routeCoords.length - 1], edgeCoords[1]);
+			result.push({
+				type: type,
+				text: text,
+				distance: distance,
+				time: time,
+				index: routeCoords.length
+			});
+
+			if (props.pointType & 2) {
+				result.push({
+					type: 'DestinationReached',
+					text: 'Finish!',
+					distance: 0,
+					time: 0,
+					index: routeCoords.length + edgeCoords.length - 1
 				});
 			}
 
 			return result;
+		},
+
+		_getInstructionType: function(latLng1, latLng2, latLng3) {
+			var type,
+				ax,
+				ay,
+				bx,
+				by,
+				outerProduct,
+				innerProduct,
+				connectAngle;
+
+			ax = latLng2.lng - latLng1.lng;
+			ay = latLng2.lat - latLng1.lat;
+			bx = latLng3.lng - latLng2.lng;
+			by = latLng3.lat - latLng3.lat;
+			outerProduct = ax * by - ay * bx;
+			innerProduct = ax * bx + ay * by;
+			connectAngle = Math.atan2(outerProduct, innerProduct) * 180 / Math.PI;
+			//console.log(connectAngle);
+			if (-10 <= connectAngle && connectAngle <= 10) {
+				type = 'Straight';
+			} else if (-30 <= connectAngle && connectAngle <= -10) {
+				type = 'SlightRight';
+			} else if (-150 <= connectAngle && connectAngle <= -30) {
+				type = 'Right';
+			} else if (-170 <= connectAngle && connectAngle <= -150) {
+				type = 'SharpRight';
+			} else if (-180 <= connectAngle && connectAngle <= -170) {
+				type = 'TurnAround';
+			} else if (10 <= connectAngle && connectAngle <= 30) {
+				type = 'SlightLeft';
+			} else if (30 <= connectAngle && connectAngle <= 150) {
+				type = 'Left';
+			} else if (150 <= connectAngle && connectAngle <= 170) {
+				type = 'SharpLeft';
+			} else if (170 <= connectAngle && connectAngle <= 180) {
+				type = 'TurnAround';
+			}
+			return type;
 		}
 	});
 
